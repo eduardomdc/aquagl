@@ -19,6 +19,7 @@ include_directories(
 
 set(MY_SOURCE_FILES
     ../src/main.cpp
+    ../src/image_loader.cpp
 )
 
 link_directories(${GLAD_INCLUDE_DIRS})
