@@ -20,6 +20,8 @@ include_directories(
 set(MY_SOURCE_FILES
     ../src/main.cpp
     ../src/image_loader.cpp
+    ../src/camera.cpp
+    ../src/cavegen.cpp
 )
 
 link_directories(${GLAD_INCLUDE_DIRS})

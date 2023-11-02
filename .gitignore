@@ -7,3 +7,4 @@ build/glad/Makefile
 build/glad/cmake_install.cmake
 build/glad/libglad.a
 build/glad/glad.c
+src/.vscode

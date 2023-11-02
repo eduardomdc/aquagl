@@ -11,7 +11,7 @@
 class Shader
 {
 public:
-    unsigned int ID;
+    unsigned int id;
     // constructor generates the shader on the fly
     // ------------------------------------------------------------------------
     Shader(const char* vertexPath, const char* fragmentPath)
@@ -59,11 +59,11 @@ public:
         glCompileShader(fragment);
         checkCompileErrors(fragment, "FRAGMENT");
         // shader Program
-        ID = glCreateProgram();
-        glAttachShader(ID, vertex);
-        glAttachShader(ID, fragment);
-        glLinkProgram(ID);
-        checkCompileErrors(ID, "PROGRAM");
+        id = glCreateProgram();
+        glAttachShader(id, vertex);
+        glAttachShader(id, fragment);
+        glLinkProgram(id);
+        checkCompileErrors(id, "PROGRAM");
         // delete the shaders as they're linked into our program now and no longer necessary
         glDeleteShader(vertex);
         glDeleteShader(fragment);
@@ -72,23 +72,23 @@ public:
     // ------------------------------------------------------------------------
     void use() 
     { 
-        glUseProgram(ID); 
+        glUseProgram(id); 
     }
     // utility uniform functions
     // ------------------------------------------------------------------------
     void setBool(const std::string &name, bool value) const
     {         
-        glUniform1i(glGetUniformLocation(ID, name.c_str()), (int)value); 
+        glUniform1i(glGetUniformLocation(id, name.c_str()), (int)value); 
     }
     // ------------------------------------------------------------------------
     void setInt(const std::string &name, int value) const
     { 
-        glUniform1i(glGetUniformLocation(ID, name.c_str()), value); 
+        glUniform1i(glGetUniformLocation(id, name.c_str()), value); 
     }
     // ------------------------------------------------------------------------
     void setFloat(const std::string &name, float value) const
     { 
-        glUniform1f(glGetUniformLocation(ID, name.c_str()), value); 
+        glUniform1f(glGetUniformLocation(id, name.c_str()), value); 
     }
 
 private:
