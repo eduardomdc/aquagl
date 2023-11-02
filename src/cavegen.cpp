@@ -16,6 +16,26 @@ Cavegen::Cavegen(){
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
+int load_texture(const char* file, unsigned int format, unsigned int index) {
+    int width, height, nrChannels;
+    unsigned int texture;
+    
+    unsigned char *data = stbi_load(file, &width, &height, &nrChannels, 0);
+    if (!data) {
+        std::cout<<"Failed to load texture data"<<std::endl;
+        return -1;
+    }
+    glGenTextures(1, &texture); // texture array of size 1
+    glActiveTexture(GL_TEXTURE0+index);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    // image data to gl texture
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    // free image data
+    stbi_image_free(data);
+    return texture;
+}
+
 int Cavegen::init(){
     // glfw: initialize and configure
     // ------------------------------
@@ -76,50 +96,16 @@ int Cavegen::init(){
     // position attribute
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-    // color attribute
-    //glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3* sizeof(float)));
-    //glEnableVertexAttribArray(1);
-    //glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-    //glEnableVertexAttribArray(2);
+    // texture mapping attribute
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3*sizeof(float)));
     glEnableVertexAttribArray(1);
     // safety unbinding
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
-    // color attribute
-    //glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-    //glEnableVertexAttribArray(1);
-    // create element buffer object EBO
-        // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
-    // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
-    // glBindVertexArray(0);
     // LOADING TEXTURE ------------
-    int width, height, nrChannels;
-    unsigned char *data = stbi_load("../textures/container.jpg", &width, &height, &nrChannels, 0);
-    if (!data) {
-        std::cout<<"Failed to load texture data"<<std::endl;
-    }
-    glGenTextures(1, &texture1); // texture array of size 1
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture1);
-    
-    // image data to gl texture
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    // free image data
-    stbi_image_free(data);
+    texture1 = load_texture("../textures/container.jpg", GL_RGB, 0);
 
-    glGenTextures(1, &texture2);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, texture2);
-
-    // load 2nd texture
-    stbi_set_flip_vertically_on_load(true);
-    data = stbi_load("../textures/awesomeface.png", &width, &height, &nrChannels, 0);
-    if (data){
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
+    texture2 = load_texture("../textures/awesomeface.png", GL_RGBA, 1);
 
     // set shader samplers for textures
     shader = new Shader("../src/shaders/v.vs", "../src/shaders/f.fs");
