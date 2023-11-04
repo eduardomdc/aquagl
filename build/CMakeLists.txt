@@ -21,7 +21,8 @@ set(MY_SOURCE_FILES
     ../src/main.cpp
     ../src/image_loader.cpp
     ../src/camera.cpp
-    ../src/cavegen.cpp
+    ../src/app.cpp
+    ../src/cave.cpp
 )
 
 link_directories(${GLAD_INCLUDE_DIRS})

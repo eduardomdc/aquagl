@@ -11,6 +11,7 @@ public:
     glm::vec3 pos;
     glm::vec3 front;
     glm::vec3 up;
+    float yaw, pitch;
 
     void move(glm::vec3 newPos);
     glm::mat4 view();

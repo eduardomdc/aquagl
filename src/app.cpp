@@ -1,4 +1,5 @@
-#include "cavegen.hpp"
+#include "app.hpp"
+#include <GLFW/glfw3.h>
 #include <iostream>
 #include "glm/ext/matrix_float4x4.hpp"
 #include "stb_image.h"
@@ -7,14 +8,14 @@
 #include "glm/gtc/type_ptr.hpp"
 #include "glm/geometric.hpp"
 #include "glm/trigonometric.hpp"
+#include "cave.hpp"
 
-Cavegen::Cavegen(){
+App::App(){
 	camera = Camera();
+    cave = new Cave(10, 10, 10);
     texture1 = 0;
     texture2 = 0;
 }
-
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 int load_texture(const char* file, unsigned int format, unsigned int index) {
     int width, height, nrChannels;
@@ -36,10 +37,10 @@ int load_texture(const char* file, unsigned int format, unsigned int index) {
     return texture;
 }
 
-int Cavegen::init(){
+int App::init(){
     // glfw: initialize and configure
     // ------------------------------
-    std::cout << "Cavegen::init Initializing systems" << std::endl;
+    std::cout << "App::init Initializing systems" << std::endl;
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -59,8 +60,6 @@ int Cavegen::init(){
         return -1;
     }
     glfwMakeContextCurrent(window);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-
     // glad: load all OpenGL function pointers
     // ---------------------------------------
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -91,7 +90,12 @@ int Cavegen::init(){
 
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(
+        GL_ARRAY_BUFFER,
+        cave->vertices.size() * sizeof(float), 
+        static_cast<void*>(cave->vertices.data()), 
+        GL_STATIC_DRAW
+    );
 
     // position attribute
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
@@ -113,10 +117,24 @@ int Cavegen::init(){
     glUniform1i(glGetUniformLocation(shader->id, "texture1"), 0);
     shader->setInt("texture2", 1);
 	
+	// capture mouse
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+    // model matrix
+    glm::mat4 model = glm::mat4(1.0f);
+	model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
+	int modelLoc = glGetUniformLocation(shader->id, "model");
+	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));   
+
+    //projection matrix
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+	int projectionLoc = glGetUniformLocation(shader->id, "projection");
+	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+
     return 0;
 }
 
-void Cavegen::render(){
+void App::render(){
 	// rendering commands
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -130,19 +148,14 @@ void Cavegen::render(){
 	trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
 	trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));*/
 	//glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
-	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
-	int modelLoc = glGetUniformLocation(shader->id, "model");
-	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+	
+
+    // view matrix
 	int viewLoc = glGetUniformLocation(shader->id, "view");
-	const float radius = 10.0f;
-	float camX = sin(glfwGetTime()) * radius;
-	float camZ = cos(glfwGetTime()) * radius;
-	glm::mat4 view = glm::lookAt(glm::vec3(camX, 0, camZ), glm::vec3(0, 0, 0), glm::vec3(0,1,0));
-    glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
-	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-	int projectionLoc = glGetUniformLocation(shader->id, "projection");
-	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+	glm::mat4 view = camera.view();
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+
+    
 
 	shader->use();
 	glBindVertexArray(VAO);
@@ -160,8 +173,21 @@ void Cavegen::render(){
 	// check and call events and swap buffers
 	glfwSwapBuffers(window);
 	glfwPollEvents();
+	float currentFrame = glfwGetTime();
+	deltaTime = currentFrame - lastFrame;
+	lastFrame = currentFrame;
 }
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height){
-    glViewport(0,0,width,height);
+void App::input(){
+    if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+	const float cameraSpeed = 2.5f*deltaTime;
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        camera.pos += cameraSpeed * camera.front;
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        camera.pos -= cameraSpeed * camera.front;
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        camera.pos -= glm::normalize(glm::cross(camera.front, camera.up)) * cameraSpeed;
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        camera.pos += glm::normalize(glm::cross(camera.front, camera.up)) * cameraSpeed;
 }
