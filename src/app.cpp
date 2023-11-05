@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include "glm/ext/matrix_float4x4.hpp"
+#include "glm/ext/matrix_transform.hpp"
 #include "stb_image.h"
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
@@ -12,7 +13,7 @@
 
 App::App(){
 	camera = Camera();
-    cave = new Cave(2, 2, 2);
+    cave = new Cave(200, 200, 200);
     texture1 = 0;
     texture2 = 0;
 }
@@ -122,12 +123,13 @@ int App::init(){
 
     // model matrix
     glm::mat4 model = glm::mat4(1.0f);
-	model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
+    //model = glm::scale(model, glm::vec3(0.01f, 0.01f, 0.01f));
+	//model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
 	int modelLoc = glGetUniformLocation(shader->id, "model");
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));   
 
     //projection matrix
-    glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 1000.0f);
 	int projectionLoc = glGetUniformLocation(shader->id, "projection");
 	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
@@ -182,7 +184,7 @@ void App::render(){
 void App::input(){
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
-	const float cameraSpeed = 2.5f*deltaTime;
+	const float cameraSpeed = 4.0f*deltaTime;
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         camera.pos += cameraSpeed * camera.front;
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)

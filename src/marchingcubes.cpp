@@ -24,8 +24,8 @@ int mcIndex(float values[8], float level){
 
 std::vector<float> mcVertex(float vertex[8], float level){
 	std::vector<float> verts;
-	int idx = mcIndex(vertex, 0);
-	std::cout<<"mcVertex:: idx="<<idx<<std::endl;
+	int idx = mcIndex(vertex, level);
+	//std::cout<<"mcVertex:: idx="<<idx<<std::endl;
 	const int* edges = triTable[idx];
 	for (int i=0; edges[i] != -1; i++){
 		const int* edgeVertices = edgeConnections[edges[i]];
@@ -33,8 +33,15 @@ std::vector<float> mcVertex(float vertex[8], float level){
 		glm::vec3 offset1 = cornerOffsets[vert1];
 		int vert2 = edgeVertices[1];
 		glm::vec3 offset2 = cornerOffsets[vert2];
+		/*
+		std::cout<<"offset1::"<<offset1[0]<<","<<offset1[1]<<","<<offset1[2]<<std::endl;
+		std::cout<<"offset2::"<<offset2[0]<<","<<offset2[1]<<","<<offset2[2]<<std::endl;
+		std::cout<<"value at 1::"<<vertex[vert1]<<std::endl;
+		std::cout<<"value at 2::"<<vertex[vert2]<<std::endl;*/
 		// now interpolate between two vertices offsets
-		glm::vec3 final = offset1 + (level-vertex[vert1]) * (offset2-offset1) / (vertex[vert2]-vertex[vert1]);
+		//glm::vec3 final = (offset1 + offset2)*0.5f;//((level-vertex[vert1]) * (offset2-offset1) / (vertex[vert2]-vertex[vert1]));
+		glm::vec3 final = offset1 + (offset2-offset1)*(level-vertex[vert1])/(vertex[vert2]-vertex[vert1]);
+		//std::cout<<"final::"<<final[0]<<","<<final[1]<<","<<final[2]<<std::endl;
 		verts.push_back(final[0]);
 		verts.push_back(final[1]);
 		verts.push_back(final[2]);
@@ -64,16 +71,16 @@ std::vector<float> marchingcubes(std::vector<std::vector<std::vector<float>>> po
 					mcVerts[i+1] += y;
 					mcVerts[i+2] += z;
 				}
-				std::cout<<"mcVerts size="<<mcVerts.size()<<std::endl;
+				//std::cout<<"mcVerts size="<<mcVerts.size()<<std::endl;
 				//newVerts.insert(newVerts.end(), mcVerts.begin(), mcVerts.end());
 				for (int i=0; i<mcVerts.size(); i+=3){
 					newVerts.push_back(mcVerts[i]);
 					newVerts.push_back(mcVerts[i+1]);
 					newVerts.push_back(mcVerts[i+2]);
-					if ((i-2)%3==0){
+					if ((i/3)%3==0){
 					newVerts.push_back(0.0);// texture coords
 					newVerts.push_back(0.0);}
-					else if ((i)%2==0){
+					else if ((i/3)%2==0){
 					newVerts.push_back(0.5);// texture coords
 					newVerts.push_back(1.0);}
 					else {

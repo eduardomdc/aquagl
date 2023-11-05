@@ -49,7 +49,7 @@ int main(){
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height){
     glViewport(0,0,width,height);
-    glm::mat4 projection = glm::perspective(glm::radians(45.0f), float(width) / float(height), 0.1f, 100.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), float(width) / float(height), 0.1f, 1000.0f);
 	int projectionLoc = glGetUniformLocation(app.shader->id, "projection");
 	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
     app.shader->use();
