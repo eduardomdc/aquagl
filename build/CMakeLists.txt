@@ -23,6 +23,7 @@ set(MY_SOURCE_FILES
     ../src/camera.cpp
     ../src/app.cpp
     ../src/cave.cpp
+    ../src/marchingcubes.cpp
 )
 
 link_directories(${GLAD_INCLUDE_DIRS})

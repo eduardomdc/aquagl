@@ -12,7 +12,7 @@
 
 App::App(){
 	camera = Camera();
-    cave = new Cave(10, 10, 10);
+    cave = new Cave(2, 2, 2);
     texture1 = 0;
     texture2 = 0;
 }
@@ -159,6 +159,7 @@ void App::render(){
 
 	shader->use();
 	glBindVertexArray(VAO);
+    /*
 	for (int i = 0; i < 10; i++){
 		glm::mat4 model = glm::mat4(1.0f);
 		model = glm::translate(model, cubePositions[i]);
@@ -167,9 +168,9 @@ void App::render(){
 		int modelLoc = glGetUniformLocation(shader->id, "model");
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, 0, 36);
-	}
+	}*/
 	//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-	//glDrawArrays(GL_TRIANGLES, 0, 36);
+	glDrawArrays(GL_TRIANGLES, 0, cave->vertices.size()/5);
 	// check and call events and swap buffers
 	glfwSwapBuffers(window);
 	glfwPollEvents();

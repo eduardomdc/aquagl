@@ -12,6 +12,7 @@ public:
     void generatePoints();
     void generateVertices();
     unsigned int sizex, sizey, sizez;
+    unsigned int trianglesCount;
     vector<vector<vector<float>>> cavepoints;
     std::vector<float> vertices = {
         -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,

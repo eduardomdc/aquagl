@@ -1,3 +1,4 @@
+#include <ctime>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
@@ -12,6 +13,7 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include "app.hpp"
+#include <random>
 
 App app = App();
 
@@ -20,6 +22,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 int main(){
     std::cout << "main:: starting" << std::endl;
+    srand(time(nullptr));
     
     app.init();
     glfwSetCursorPosCallback(app.window, mouse_callback);
