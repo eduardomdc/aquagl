@@ -24,6 +24,8 @@ set(MY_SOURCE_FILES
     ../src/app.cpp
     ../src/cave.cpp
     ../src/marchingcubes.cpp
+    ../src/perlin.cpp
+    ../src/simplex.cpp
 )
 
 link_directories(${GLAD_INCLUDE_DIRS})

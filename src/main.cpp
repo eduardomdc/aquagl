@@ -14,6 +14,7 @@
 #include "glm/gtc/type_ptr.hpp"
 #include "app.hpp"
 #include <random>
+#include <time.h>
 
 App app = App();
 

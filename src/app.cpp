@@ -13,7 +13,7 @@
 
 App::App(){
 	camera = Camera();
-    cave = new Cave(200, 200, 200);
+    cave = new Cave(100, 100, 100);
     texture1 = 0;
     texture2 = 0;
 }
@@ -108,15 +108,15 @@ int App::init(){
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
     // LOADING TEXTURE ------------
-    texture1 = load_texture("../textures/container.jpg", GL_RGB, 0);
+    texture1 = load_texture("../textures/rock.jpg", GL_RGB, 0);
 
-    texture2 = load_texture("../textures/awesomeface.png", GL_RGBA, 1);
+    //texture2 = load_texture("../textures/awesomeface.png", GL_RGBA, 1);
 
     // set shader samplers for textures
     shader = new Shader("../src/shaders/v.vs", "../src/shaders/f.fs");
     shader->use();
     glUniform1i(glGetUniformLocation(shader->id, "texture1"), 0);
-    shader->setInt("texture2", 1);
+    //shader->setInt("texture2", 1);
 	
 	// capture mouse
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -138,7 +138,7 @@ int App::init(){
 
 void App::render(){
 	// rendering commands
-	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glActiveTexture(GL_TEXTURE0);
@@ -184,7 +184,7 @@ void App::render(){
 void App::input(){
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
-	const float cameraSpeed = 4.0f*deltaTime;
+	const float cameraSpeed = 40.0f*deltaTime;
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         camera.pos += cameraSpeed * camera.front;
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)

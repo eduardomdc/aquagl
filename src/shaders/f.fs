@@ -6,9 +6,8 @@ in vec2 TexCoord;
 in float zbuf;
 
 uniform sampler2D texture1;
-uniform sampler2D texture2;
 
 void main()
 {
-    FragColor = zbuf*vec4(0.0f, 0.0f, 0.002f, 1.0f)+mix(texture(texture1, TexCoord), texture(texture2, TexCoord), 0.2);
+    FragColor = zbuf*vec4(-0.0015f, -0.0015f, -0.0005f, 1.0f)+texture(texture1, TexCoord);
 }
