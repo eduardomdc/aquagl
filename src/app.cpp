@@ -13,7 +13,9 @@
 
 App::App(){
 	camera = Camera();
-    cave = new Cave(100, 100, 100);
+    cave = new Cave(60, 50, 60);
+    camera.pos = {75, 100, 75};
+    camera.front = -glm::normalize(camera.pos-glm::vec3(cave->sizex/2.0f, 0.0f, cave->sizez/2.0f));
     texture1 = 0;
     texture2 = 0;
 }
@@ -93,17 +95,20 @@ int App::init(){
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(
         GL_ARRAY_BUFFER,
-        cave->vertices.size() * sizeof(float), 
-        static_cast<void*>(cave->vertices.data()), 
+        cave->data.size() * sizeof(float), 
+        static_cast<void*>(cave->data.data()), 
         GL_STATIC_DRAW
     );
 
     // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-    // texture mapping attribute
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3*sizeof(float)));
+    // vertex normal attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3*sizeof(float)));
     glEnableVertexAttribArray(1);
+    // texture mapping attribute
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6*sizeof(float)));
+    glEnableVertexAttribArray(2);
     // safety unbinding
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -117,40 +122,43 @@ int App::init(){
     shader->use();
     glUniform1i(glGetUniformLocation(shader->id, "texture1"), 0);
     //shader->setInt("texture2", 1);
-	
+	glUniform3fv(glGetUniformLocation(shader->id, "objectColor"), 1, glm::value_ptr(cave->rockcolor));
+    glUniform3fv(glGetUniformLocation(shader->id, "ambientLightColor"), 1, glm::value_ptr(cave->ambientLight->intensity*cave->ambientLight->color));
+    glUniform3fv(glGetUniformLocation(shader->id, "lightPos"), 1, glm::value_ptr(cave->light->pos));
+	glUniform3fv(glGetUniformLocation(shader->id, "lightColor"), 1, glm::value_ptr(cave->light->color));
+
 	// capture mouse
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // model matrix
     glm::mat4 model = glm::mat4(1.0f);
     //model = glm::scale(model, glm::vec3(0.01f, 0.01f, 0.01f));
-	//model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
+	//model = glm::rotate(model, glm::radians(135.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	int modelLoc = glGetUniformLocation(shader->id, "model");
-	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));   
+	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model)); 
 
     //projection matrix
     glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 1000.0f);
 	int projectionLoc = glGetUniformLocation(shader->id, "projection");
 	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
-
+    //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
     return 0;
 }
 
 void App::render(){
 	// rendering commands
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glm::vec3 ambient = cave->ambientLight->color*(cave->ambientLight->intensity*0.2f);
+	glClearColor(ambient.x, ambient.y, ambient.z, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture1);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, texture2);
+  
 	/* 
 	trans = glm::mat4(1.0f);
 	trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
 	trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));*/
 	//glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
-	
+    
 
     // view matrix
 	int viewLoc = glGetUniformLocation(shader->id, "view");

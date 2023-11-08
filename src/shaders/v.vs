@@ -1,11 +1,12 @@
 #version 330 core
-layout (location = 0) in vec3 aPos;   // the position variable has attribute position 0
-//layout (location = 1) in vec3 aColor; // the color variable has attribute position 1
-layout (location = 1) in vec2 aTexCoord;
+layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec3 aNormal; // vertex normal
+layout (location = 2) in vec2 aTexCoord;
 
-//out vec3 ourColor; // output a color to the fragment shader
 out vec2 TexCoord;
 out float zbuf;
+out vec3 normal;
+out vec3 fragPos;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -17,4 +18,6 @@ void main()
     //ourColor = aColor; // set ourColor to the input color we got from the vertex data
     TexCoord = aTexCoord;
     zbuf = gl_Position[2];
+    normal = aNormal;
+    fragPos = vec3(model*vec4(aPos, 1.0));
 }       

@@ -26,6 +26,7 @@ set(MY_SOURCE_FILES
     ../src/marchingcubes.cpp
     ../src/perlin.cpp
     ../src/simplex.cpp
+    ../src/light.cpp
 )
 
 link_directories(${GLAD_INCLUDE_DIRS})

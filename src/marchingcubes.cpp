@@ -11,14 +11,14 @@
 
 int mcIndex(float values[8], float level){
     int index = 0;
-	if (values[0] < level) index |= 1;
-	if (values[1] < level) index |= 2;
-	if (values[2] < level) index |= 4;
-	if (values[3] < level) index |= 8;
-	if (values[4] < level) index |= 16;
-	if (values[5] < level) index |= 32;
-	if (values[6] < level) index |= 64;
-	if (values[7] < level) index |= 128;
+	if (values[0] > level) index |= 1;
+	if (values[1] > level) index |= 2;
+	if (values[2] > level) index |= 4;
+	if (values[3] > level) index |= 8;
+	if (values[4] > level) index |= 16;
+	if (values[5] > level) index |= 32;
+	if (values[6] > level) index |= 64;
+	if (values[7] > level) index |= 128;
 	return index;
 }
 
