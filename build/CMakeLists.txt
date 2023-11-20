@@ -19,14 +19,15 @@ include_directories(
 
 set(MY_SOURCE_FILES
     ../src/main.cpp
-    ../src/image_loader.cpp
+    ../src/external/image_loader.cpp
     ../src/camera.cpp
     ../src/app.cpp
     ../src/cave.cpp
     ../src/marchingcubes.cpp
     ../src/perlin.cpp
-    ../src/simplex.cpp
+    ../src/external/simplex.cpp
     ../src/light.cpp
+    ../src/boids.cpp
 )
 
 link_directories(${GLAD_INCLUDE_DIRS})

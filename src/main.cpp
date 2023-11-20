@@ -6,7 +6,7 @@
 #include "glm/ext/vector_float3.hpp"
 #include "glm/geometric.hpp"
 #include "glm/trigonometric.hpp"
-#include "stb_image.h"
+#include "external/stb_image.h"
 #include "shader.hpp"
 #include "math.h"
 #include "glm/glm.hpp"
@@ -24,7 +24,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 int main(){
     std::cout << "main:: starting" << std::endl;
     srand(time(nullptr));
-    
+
     app.init();
     glfwSetCursorPosCallback(app.window, mouse_callback);
     glfwSetFramebufferSizeCallback(app.window, framebuffer_size_callback);
@@ -35,16 +35,19 @@ int main(){
         app.input();
         // rendering commands
         app.render();
+        // update physics
+        app.update();
     }
     // deallocate resources
     glDeleteVertexArrays(1, &app.VAO);
     glDeleteBuffers(1, &app.VBO);
     glDeleteBuffers(1, &app.EBO);
     glDeleteProgram(app.shader->id);
-
+    delete app.cave;
+    delete app.boidsys;
     //close glfw
     glfwTerminate();
-
+    std::cout<<"Exited without errors."<<std::endl;
     return 0;
 }
 
@@ -73,8 +76,11 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos){
     if (app.camera.pitch < -89) app.camera.pitch = -89;
 
     glm::vec3 direction;
+    /*
     direction.x = cos(glm::radians(app.camera.yaw )) * cos(glm::radians(app.camera.pitch));
     direction.y = sin(glm::radians(app.camera.pitch));
     direction.z = sin(glm::radians(app.camera.yaw)) * cos(glm::radians(app.camera.pitch));
+    */
+    direction = -app.camera.pos;
     app.camera.front = glm::normalize(direction);
 }

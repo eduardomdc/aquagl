@@ -5,7 +5,7 @@
 #include "light.hpp"
 #include "marchingcubes.hpp"
 #include "perlin.hpp"
-#include "SimplexNoise.h"
+#include "external/SimplexNoise.h"
 #include <iostream>
 #include <algorithm>
 #include <GLFW/glfw3.h>
@@ -24,7 +24,8 @@ Cave::Cave(uint sizex, uint sizey, uint sizez){
     generatePoints();
     std::cout<<"Generating mesh..."<<std::endl;
     float time = (float)glfwGetTime();
-    vertices = marchingcubes(cavepoints, 0.0);
+    level = 0;
+    vertices = marchingcubes(cavepoints, level);
     /*for(int i=0; i<vertices.size(); i+=5){
         std::cout<< "{";
         std::cout << vertices[i];
@@ -45,7 +46,15 @@ Cave::Cave(uint sizex, uint sizey, uint sizez){
     rockcolor = {1.0, 1.0, 1.0};
 }
 
+Cave::~Cave(){
+    std::cout<<"Cave::Runnning destructor"<<std::endl;
+    delete simplex;
+    delete light;
+    delete ambientLight;
+}
+
 float randomf(){
+    // random float between -1 and 1
     float r = 2*(float(rand())/RAND_MAX) - 1;
     return r;
 }

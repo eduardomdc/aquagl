@@ -3,7 +3,7 @@
 
 #include <random>
 #include <vector>
-#include "SimplexNoise.h"
+#include "external/SimplexNoise.h"
 #include "perlin.hpp"
 #include "light.hpp"
 #include "glm/glm.hpp"
@@ -14,12 +14,14 @@ using namespace std;
 class Cave {
 public:
     Cave(uint sizex, uint sizey, uint sizez);
+    ~Cave();
     float field(float x, float y, float z);
     void generatePoints();
     void generateVertices();
     void calculateNormals();
     unsigned int sizex, sizey, sizez;
     unsigned int trianglesCount;
+    float level; // isosurface value
     Perlin* perlin;
     SimplexNoise* simplex;
     Light* light;
@@ -29,5 +31,5 @@ public:
     std::vector<float> data; //vertices with normals
     glm::vec3 rockcolor;
 };
-
+float randomf();
 #endif

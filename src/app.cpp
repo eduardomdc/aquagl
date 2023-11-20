@@ -1,9 +1,10 @@
 #include "app.hpp"
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include "boids.hpp"
 #include "glm/ext/matrix_float4x4.hpp"
 #include "glm/ext/matrix_transform.hpp"
-#include "stb_image.h"
+#include "external/stb_image.h"
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
@@ -14,6 +15,7 @@
 App::App(){
 	camera = Camera();
     cave = new Cave(60, 50, 60);
+    boidsys = new BoidSystem(10, cave);
     camera.pos = {75, 100, 75};
     camera.front = -glm::normalize(camera.pos-glm::vec3(cave->sizex/2.0f, 0.0f, cave->sizez/2.0f));
     texture1 = 0;
@@ -81,17 +83,12 @@ int App::init(){
     // texture filtering methods
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
+    
+    // ----  CAVE GRAPHICS
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
-    //glGenBuffers(1, &EBO);
     // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
     glBindVertexArray(VAO);
-    
-    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    //glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(
         GL_ARRAY_BUFFER,
@@ -100,6 +97,11 @@ int App::init(){
         GL_STATIC_DRAW
     );
 
+    /*
+        vertex data attributes
+        |   position    |   normal  |   texmap  |
+        |   x, y, z     |   x, y, z |   x, y    |
+    */
     // position attribute
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
@@ -114,26 +116,52 @@ int App::init(){
     glBindVertexArray(0);
     // LOADING TEXTURE ------------
     texture1 = load_texture("../textures/rock.jpg", GL_RGB, 0);
-
-    //texture2 = load_texture("../textures/awesomeface.png", GL_RGBA, 1);
-
     // set shader samplers for textures
     shader = new Shader("../src/shaders/v.vs", "../src/shaders/f.fs");
     shader->use();
     glUniform1i(glGetUniformLocation(shader->id, "texture1"), 0);
-    //shader->setInt("texture2", 1);
 	glUniform3fv(glGetUniformLocation(shader->id, "objectColor"), 1, glm::value_ptr(cave->rockcolor));
     glUniform3fv(glGetUniformLocation(shader->id, "ambientLightColor"), 1, glm::value_ptr(cave->ambientLight->intensity*cave->ambientLight->color));
     glUniform3fv(glGetUniformLocation(shader->id, "lightPos"), 1, glm::value_ptr(cave->light->pos));
 	glUniform3fv(glGetUniformLocation(shader->id, "lightColor"), 1, glm::value_ptr(cave->light->color));
+
+    // ----- BOID GRAPHICS
+    glGenVertexArrays(1, &boidsys->VAO);
+    glGenBuffers(1, &boidsys->VBO);
+    // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
+    glBindVertexArray(boidsys->VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, boidsys->VBO);
+    glBufferData(
+        GL_ARRAY_BUFFER,
+        boidsys->verts.size() * sizeof(float), 
+        static_cast<void*>(boidsys->verts.data()), 
+        GL_STATIC_DRAW
+    );
+
+    /*
+        vertex data attributes
+        |   position    |   normal  |   texmap  |
+        |   x, y, z     |   x, y, z |   x, y    |
+    */
+    // position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    // vertex normal attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3*sizeof(float)));
+    glEnableVertexAttribArray(1);
+    // texture mapping attribute
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6*sizeof(float)));
+    glEnableVertexAttribArray(2);
+    // safety unbinding
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
 
 	// capture mouse
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // model matrix
     glm::mat4 model = glm::mat4(1.0f);
-    //model = glm::scale(model, glm::vec3(0.01f, 0.01f, 0.01f));
-	//model = glm::rotate(model, glm::radians(135.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
 	int modelLoc = glGetUniformLocation(shader->id, "model");
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model)); 
 
@@ -142,8 +170,8 @@ int App::init(){
 	int projectionLoc = glGetUniformLocation(shader->id, "projection");
 	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
     //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
+    //glEnable(GL_CULL_FACE);
+    //glCullFace(GL_BACK);
     return 0;
 }
 
@@ -159,28 +187,31 @@ void App::render(){
 	trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));*/
 	//glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
     
+    //model matrix
+    glm::mat4 model = glm::mat4(1.0f);
 
+	int modelLoc = glGetUniformLocation(shader->id, "model");
+	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
     // view matrix
 	int viewLoc = glGetUniformLocation(shader->id, "view");
 	glm::mat4 view = camera.view();
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
     
-
+    // draw cave
 	shader->use();
 	glBindVertexArray(VAO);
-    /*
-	for (int i = 0; i < 10; i++){
-		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, cubePositions[i]);
-		float angle = 20 * i;
-		model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-		int modelLoc = glGetUniformLocation(shader->id, "model");
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-		glDrawArrays(GL_TRIANGLES, 0, 36);
-	}*/
-	//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 	glDrawArrays(GL_TRIANGLES, 0, cave->vertices.size()/5);
+    // draw fishies
+    glBindVertexArray(boidsys->VAO);
+    for (int i=0; i< boidsys->boids.size(); i++){
+        Boid* boid = boidsys->boids[i];
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, boid->pos);
+        int modelLoc = glGetUniformLocation(shader->id, "model");
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+        glDrawArrays(GL_TRIANGLES, 0, boidsys->boids.size());
+    }
 	// check and call events and swap buffers
 	glfwSwapBuffers(window);
 	glfwPollEvents();
@@ -192,13 +223,29 @@ void App::render(){
 void App::input(){
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
-	const float cameraSpeed = 40.0f*deltaTime;
+	
+    const float cameraSpeed = 50.0f*deltaTime;
+    /*
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         camera.pos += cameraSpeed * camera.front;
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
         camera.pos -= cameraSpeed * camera.front;
+    */
+    glm::vec3 right = glm::normalize(glm::cross(camera.front, camera.up));
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        camera.pos += cameraSpeed * glm::normalize(glm::cross(camera.front, -right));
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        camera.pos -= cameraSpeed * glm::normalize(glm::cross(camera.front, -right));
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        camera.pos -= glm::normalize(glm::cross(camera.front, camera.up)) * cameraSpeed;
+        camera.pos -= right * cameraSpeed;
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        camera.pos += glm::normalize(glm::cross(camera.front, camera.up)) * cameraSpeed;
+        camera.pos += right * cameraSpeed;
+    glm::vec3 direction;
+    direction = -camera.pos+glm::vec3(cave->sizex/2, 0, cave->sizez/2);
+    camera.front = glm::normalize(direction);
+}
+
+void App::update(){
+    //camera.update(deltaTime, cave);
+    boidsys->update(deltaTime);
 }
