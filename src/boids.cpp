@@ -14,7 +14,7 @@ bool inVisionCone(Boid* boid, Boid* neigh){
     // we can check the dot product between normalized boid->neigh and boid velocity
     // the closer to -1 the more neigh is directly behind boid.
     glm::vec3 dir = glm::normalize(neigh->pos-boid->pos);
-    if (glm::dot(dir, glm::normalize(boid->vel)) < 0.0f) return false;
+    if (glm::dot(dir, glm::normalize(boid->vel)) < -0.2f) return false;
     else return true;
 }
 
@@ -49,6 +49,8 @@ void Boid::update(float delta, BoidSystem* bs){
     glm::vec3 avoidance = glm::vec3(0.0f, 0.0f , 0.0f); // avoidance component
     float vision = 5.0f;
     glm::vec3 raycast = pos + glm::normalize(vel)*vision;
+
+    // side of box detection
     if (pos.x < 5.0f){
         avoidance += 0.5f*glm::vec3(1.0f, 0.0f, 0.0f);
     }
@@ -67,6 +69,11 @@ void Boid::update(float delta, BoidSystem* bs){
     if (pos.z > bs->cave->sizez-5.0f){
         avoidance -= .5f*glm::vec3(0.0f, 0.0f, 1.0f);
     }
+    // terrain avoidance
+    if (bs->cave->field(raycast.x, raycast.y, raycast.z) < bs->cave->level){
+        glm::vec3 grad = bs->cave->fieldGrad(raycast);
+        avoidance += 2.0f*grad;
+    }
 
     if (count > 0){
         averagePos = averagePos/(float)count;
@@ -77,14 +84,20 @@ void Boid::update(float delta, BoidSystem* bs){
     vel += repelling + cohesion + alignment + avoidance;
     vel = 5.0f*glm::normalize(vel);
     pos += vel*delta;
+    if (bs->cave->field(pos.x, pos.y, pos.z) < bs->cave->level){
+        pos -= vel*delta;
+        vel = glm::vec3(0.0f);
+    }
 }
 
 
 glm::vec3 randomCavePoint(Cave* cave){
     glm::vec3 point;
-    point.x = cave->sizex*(randomf()*0.5+0.5);
-    point.y = cave->sizey/2.0;
-    point.z = cave->sizez*(randomf()*0.5+0.5);
+    do {
+        point.x = cave->sizex*(randomf()*0.5+0.5);
+        point.y = cave->sizey/2.0;
+        point.z = cave->sizez*(randomf()*0.5+0.5);
+    } while (cave->field(point.x, point.y, point.z) < cave->level);
     return point;
 }
 

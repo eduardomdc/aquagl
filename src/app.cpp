@@ -17,7 +17,7 @@
 App::App(){
     std::cout<<"App::Constructor()"<<std::endl;
 	camera = Camera();
-    cave = new Cave(60, 20, 60);
+    cave = new Cave(100, 100, 100);
     boidsys = new BoidSystem(100, cave);
     camera.pos = {75, 100, 75};
     camera.front = -glm::normalize(camera.pos-glm::vec3(cave->sizex/2.0f, 0.0f, cave->sizez/2.0f));

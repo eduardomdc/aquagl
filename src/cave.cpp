@@ -59,6 +59,24 @@ float randomf(){
     return r;
 }
 
+glm::vec3 Cave::fieldGrad(glm::vec3 pos){
+    //returns gradient at pos vec(x,y,z)
+    float epsilon = 1;
+    float origin = field(pos.x, pos.y, pos.z); // value of field at vertex
+    glm::vec3 normal;
+    glm::vec3 samplePos = pos;
+    float deltax = field(samplePos.x+epsilon, samplePos.y, samplePos.z);// value of field at +(epsilon,0,0)
+    float deltay = field(samplePos.x, samplePos.y+epsilon, samplePos.z);
+    float deltaz = field(samplePos.x, samplePos.y, samplePos.z+epsilon);
+    normal = glm::vec3(
+        (deltax-origin)/epsilon,
+        (deltay-origin)/epsilon,
+        (deltaz-origin)/epsilon
+    );
+    normal = glm::normalize(normal);
+    return normal;
+}
+
 float distanceCenter(glm::vec3 pos, glm::vec3 center){
     return glm::length(pos-center);
 }
@@ -85,7 +103,7 @@ void Cave::generatePoints(){
 
 float Cave::field(float x, float y, float z){
     return simplex->noise(x/30.0, y/30.0, z/30.0)
-                                        +y*0.05
+                                        //+y*0.05
                                         -(1/(y*y+0.01))
                                         -(1/(y*y+1.))*simplex->noise(x/10., y/10., z/10.);
 }

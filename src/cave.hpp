@@ -19,6 +19,7 @@ public:
     void generatePoints();
     void generateVertices();
     void calculateNormals();
+    glm::vec3 fieldGrad(glm::vec3 pos);
     unsigned int sizex, sizey, sizez;
     unsigned int trianglesCount;
     float level; // isosurface value
