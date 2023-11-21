@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <ctime>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -24,7 +25,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 int main(){
     std::cout << "main:: starting" << std::endl;
     srand(time(nullptr));
-
+    std::cout << "seed = "<< time(nullptr) << std::endl;
     app.init();
     glfwSetCursorPosCallback(app.window, mouse_callback);
     glfwSetFramebufferSizeCallback(app.window, framebuffer_size_callback);
@@ -76,11 +77,11 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos){
     if (app.camera.pitch < -89) app.camera.pitch = -89;
 
     glm::vec3 direction;
-    /*
+    
     direction.x = cos(glm::radians(app.camera.yaw )) * cos(glm::radians(app.camera.pitch));
     direction.y = sin(glm::radians(app.camera.pitch));
     direction.z = sin(glm::radians(app.camera.yaw)) * cos(glm::radians(app.camera.pitch));
-    */
-    direction = -app.camera.pos;
+    
+    //direction = -app.camera.pos;
     app.camera.front = glm::normalize(direction);
 }

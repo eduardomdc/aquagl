@@ -17,7 +17,7 @@ public:
     glm::vec3 up;
     float delta;
     BoidSystem* system;
-    void update(float delta);
+    void update(float delta, BoidSystem* bs);
 };
 
 class BoidSystem{
@@ -28,6 +28,10 @@ public:
     std::vector<float> verts;
     unsigned int VBO, VAO;
     void update(float delta);
+    float neighboorRadius;
+    float repellingForce;
+    float cohesionForce;
+    float alignmentForce;
 };
 
 #endif

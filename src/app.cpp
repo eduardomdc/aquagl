@@ -14,8 +14,8 @@
 
 App::App(){
 	camera = Camera();
-    cave = new Cave(60, 50, 60);
-    boidsys = new BoidSystem(10, cave);
+    cave = new Cave(60, 20, 60);
+    boidsys = new BoidSystem(100, cave);
     camera.pos = {75, 100, 75};
     camera.front = -glm::normalize(camera.pos-glm::vec3(cave->sizex/2.0f, 0.0f, cave->sizez/2.0f));
     texture1 = 0;
@@ -225,24 +225,26 @@ void App::input(){
         glfwSetWindowShouldClose(window, true);
 	
     const float cameraSpeed = 50.0f*deltaTime;
-    /*
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         camera.pos += cameraSpeed * camera.front;
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
         camera.pos -= cameraSpeed * camera.front;
-    */
+    
     glm::vec3 right = glm::normalize(glm::cross(camera.front, camera.up));
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    
+    /*if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         camera.pos += cameraSpeed * glm::normalize(glm::cross(camera.front, -right));
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
         camera.pos -= cameraSpeed * glm::normalize(glm::cross(camera.front, -right));
+    */
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
         camera.pos -= right * cameraSpeed;
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.pos += right * cameraSpeed;
-    glm::vec3 direction;
-    direction = -camera.pos+glm::vec3(cave->sizex/2, 0, cave->sizez/2);
-    camera.front = glm::normalize(direction);
+    //glm::vec3 direction;
+    //direction = -camera.pos+glm::vec3(cave->sizex/2, 0, cave->sizez/2);
+    //camera.front = glm::normalize(direction);
 }
 
 void App::update(){
