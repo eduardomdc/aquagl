@@ -49,23 +49,23 @@ void Boid::update(float delta, BoidSystem* bs){
     glm::vec3 avoidance = glm::vec3(0.0f, 0.0f , 0.0f); // avoidance component
     float vision = 5.0f;
     glm::vec3 raycast = pos + glm::normalize(vel)*vision;
-    if (raycast.x < 0.0f){
-        avoidance += 1.0f*glm::vec3(1.0f, 0.0f, 0.0f);
+    if (pos.x < 5.0f){
+        avoidance += 0.5f*glm::vec3(1.0f, 0.0f, 0.0f);
     }
-    if (raycast.x > bs->cave->sizex){
-        avoidance -= 1.0f*glm::vec3(1.0f, 0.0f, 0.0f);
+    if (pos.x > bs->cave->sizex -5.0f){
+        avoidance -= 0.5f*glm::vec3(1.0f, 0.0f, 0.0f);
     }
-    if (raycast.y < 0.0f){
-        avoidance += 1.0f*glm::vec3(0.0f, 1.0f, 0.0f);
+    if (pos.y < 5.0f){
+        avoidance += .5f*glm::vec3(0.0f, 1.0f, 0.0f);
     }
-    if (raycast.y > bs->cave->sizey){
-        avoidance -= 1.0f*glm::vec3(0.0f, 1.0f, 0.0f);
+    if (pos.y > bs->cave->sizey-5.0f){
+        avoidance -= .5f*glm::vec3(0.0f, 1.0f, 0.0f);
     }
-    if (raycast.z < 0.0f){
-        avoidance += 1.0f*glm::vec3(0.0f, 0.0f, 1.0f);
+    if (pos.z < 5.0f){
+        avoidance += .5f*glm::vec3(0.0f, 0.0f, 1.0f);
     }
-    if (raycast.z > bs->cave->sizez){
-        avoidance -= 1.0f*glm::vec3(0.0f, 0.0f, 1.0f);
+    if (pos.z > bs->cave->sizez-5.0f){
+        avoidance -= .5f*glm::vec3(0.0f, 0.0f, 1.0f);
     }
 
     if (count > 0){
@@ -89,6 +89,7 @@ glm::vec3 randomCavePoint(Cave* cave){
 }
 
 BoidSystem::BoidSystem(int amount, Cave* cave){
+    std::cout<<"BoidSystem::Contructor()"<<std::endl;
     this->cave = cave;
     for (int i=0; i<amount; i++){
         Boid* boid = new Boid();

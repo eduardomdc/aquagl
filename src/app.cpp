@@ -11,8 +11,11 @@
 #include "glm/geometric.hpp"
 #include "glm/trigonometric.hpp"
 #include "cave.hpp"
+#include <random>
+#include <time.h>
 
 App::App(){
+    std::cout<<"App::Constructor()"<<std::endl;
 	camera = Camera();
     cave = new Cave(60, 20, 60);
     boidsys = new BoidSystem(100, cave);

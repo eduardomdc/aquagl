@@ -17,35 +17,37 @@
 #include <random>
 #include <time.h>
 
-App app = App();
+App* app;
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 int main(){
     std::cout << "main:: starting" << std::endl;
-    srand(time(0));
-    std::cout << "seed = "<< time(nullptr) << std::endl;
-    app.init();
-    glfwSetCursorPosCallback(app.window, mouse_callback);
-    glfwSetFramebufferSizeCallback(app.window, framebuffer_size_callback);
+    unsigned long int seed = time(nullptr);
+    srand(seed);
+    std::cout << "seed = "<< seed << std::endl;
+    app = new App();
+    app->init();
+    glfwSetCursorPosCallback(app->window, mouse_callback);
+    glfwSetFramebufferSizeCallback(app->window, framebuffer_size_callback);
 
     //render loop
-    while(!glfwWindowShouldClose(app.window)){
+    while(!glfwWindowShouldClose(app->window)){
         // input
-        app.input();
+        app->input();
         // rendering commands
-        app.render();
+        app->render();
         // update physics
-        app.update();
+        app->update();
     }
     // deallocate resources
-    glDeleteVertexArrays(1, &app.VAO);
-    glDeleteBuffers(1, &app.VBO);
-    glDeleteBuffers(1, &app.EBO);
-    glDeleteProgram(app.shader->id);
-    delete app.cave;
-    delete app.boidsys;
+    glDeleteVertexArrays(1, &app->VAO);
+    glDeleteBuffers(1, &app->VBO);
+    glDeleteBuffers(1, &app->EBO);
+    glDeleteProgram(app->shader->id);
+    delete app->cave;
+    delete app->boidsys;
     //close glfw
     glfwTerminate();
     std::cout<<"Exited without errors."<<std::endl;
@@ -55,33 +57,33 @@ int main(){
 void framebuffer_size_callback(GLFWwindow* window, int width, int height){
     glViewport(0,0,width,height);
     glm::mat4 projection = glm::perspective(glm::radians(45.0f), float(width) / float(height), 0.1f, 1000.0f);
-	int projectionLoc = glGetUniformLocation(app.shader->id, "projection");
+	int projectionLoc = glGetUniformLocation(app->shader->id, "projection");
 	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
-    app.shader->use();
+    app->shader->use();
 }
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos){
-	float xoffset = xpos - app.lastX;
-	float yoffset = app.lastY - ypos;
-    app.lastX = xpos;
-    app.lastY = ypos;
+	float xoffset = xpos - app->lastX;
+	float yoffset = app->lastY - ypos;
+    app->lastX = xpos;
+    app->lastY = ypos;
 
     const float sensitivity = 0.05f;
     xoffset *= sensitivity;
     yoffset *= sensitivity;
 
-    app.camera.yaw += xoffset;
-    app.camera.pitch += yoffset;
+    app->camera.yaw += xoffset;
+    app->camera.pitch += yoffset;
 
-    if (app.camera.pitch > 89) app.camera.pitch = 89;
-    if (app.camera.pitch < -89) app.camera.pitch = -89;
+    if (app->camera.pitch > 89) app->camera.pitch = 89;
+    if (app->camera.pitch < -89) app->camera.pitch = -89;
 
     glm::vec3 direction;
     
-    direction.x = cos(glm::radians(app.camera.yaw )) * cos(glm::radians(app.camera.pitch));
-    direction.y = sin(glm::radians(app.camera.pitch));
-    direction.z = sin(glm::radians(app.camera.yaw)) * cos(glm::radians(app.camera.pitch));
+    direction.x = cos(glm::radians(app->camera.yaw )) * cos(glm::radians(app->camera.pitch));
+    direction.y = sin(glm::radians(app->camera.pitch));
+    direction.z = sin(glm::radians(app->camera.yaw)) * cos(glm::radians(app->camera.pitch));
     
-    //direction = -app.camera.pos;
-    app.camera.front = glm::normalize(direction);
+    //direction = -app->camera.pos;
+    app->camera.front = glm::normalize(direction);
 }
