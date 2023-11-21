@@ -47,7 +47,7 @@ void Boid::update(float delta, BoidSystem* bs){
     // collision avoidance
     // boundaries
     glm::vec3 avoidance = glm::vec3(0.0f, 0.0f , 0.0f); // avoidance component
-    float vision = 10.0f;
+    float vision = 5.0f;
     glm::vec3 raycast = pos + glm::normalize(vel)*vision;
     if (raycast.x < 0.0f){
         avoidance += 1.0f*glm::vec3(1.0f, 0.0f, 0.0f);
@@ -72,7 +72,7 @@ void Boid::update(float delta, BoidSystem* bs){
         averagePos = averagePos/(float)count;
         cohesion = bs->cohesionForce*glm::normalize(averagePos-pos);
         averageVel = averageVel/(float)count;
-        alignment = bs->alignmentForce*glm::normalize(averageVel);
+        alignment = bs->alignmentForce*glm::normalize(averageVel-vel);
     }
     vel += repelling + cohesion + alignment + avoidance;
     vel = 5.0f*glm::normalize(vel);

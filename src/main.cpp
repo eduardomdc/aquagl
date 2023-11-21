@@ -24,7 +24,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 int main(){
     std::cout << "main:: starting" << std::endl;
-    srand(time(nullptr));
+    srand(time(0));
     std::cout << "seed = "<< time(nullptr) << std::endl;
     app.init();
     glfwSetCursorPosCallback(app.window, mouse_callback);
