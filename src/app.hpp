@@ -17,11 +17,12 @@ public:
     Camera camera;
     GLFWwindow* window;
     Shader* shader;
+    Shader* fishader;
     float deltaTime = 0;
     float lastFrame = 0;
     float lastX=400, lastY = 300;
     unsigned int texture1;
-    unsigned int texture2;
+    unsigned int fishtex;
     unsigned int VBO, VAO, EBO;
 
     int init();

@@ -17,12 +17,12 @@
 App::App(){
     std::cout<<"App::Constructor()"<<std::endl;
 	camera = Camera();
-    cave = new Cave(100, 100, 100);
+    cave = new Cave(50, 50, 50);
     boidsys = new BoidSystem(100, cave);
     camera.pos = {75, 100, 75};
     camera.front = -glm::normalize(camera.pos-glm::vec3(cave->sizex/2.0f, 0.0f, cave->sizez/2.0f));
     texture1 = 0;
-    texture2 = 0;
+    fishtex = 0;
 }
 
 int load_texture(const char* file, unsigned int format, unsigned int index) {
@@ -119,7 +119,9 @@ int App::init(){
     glBindVertexArray(0);
     // LOADING TEXTURE ------------
     texture1 = load_texture("../textures/rock.jpg", GL_RGB, 0);
+    fishtex = load_texture("../textures/clownfish.png", GL_RGBA, 1);
     // set shader samplers for textures
+    // CAVE SHADER- --------
     shader = new Shader("../src/shaders/v.vs", "../src/shaders/f.fs");
     shader->use();
     glUniform1i(glGetUniformLocation(shader->id, "texture1"), 0);
@@ -127,6 +129,35 @@ int App::init(){
     glUniform3fv(glGetUniformLocation(shader->id, "ambientLightColor"), 1, glm::value_ptr(cave->ambientLight->intensity*cave->ambientLight->color));
     glUniform3fv(glGetUniformLocation(shader->id, "lightPos"), 1, glm::value_ptr(cave->light->pos));
 	glUniform3fv(glGetUniformLocation(shader->id, "lightColor"), 1, glm::value_ptr(cave->light->color));
+    // model matrix
+    glm::mat4 model = glm::mat4(1.0f);
+
+	int modelLoc = glGetUniformLocation(shader->id, "model");
+	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model)); 
+
+    //projection matrix
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 1000.0f);
+	int projectionLoc = glGetUniformLocation(shader->id, "projection");
+	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+    // FISH SHADER --- --------
+    fishader = new Shader("../src/shaders/v.vs", "../src/shaders/f.fs");
+    fishader->use();
+    glUniform1i(glGetUniformLocation(fishader->id, "texture1"), 1);
+	glUniform3fv(glGetUniformLocation(fishader->id, "objectColor"), 1, glm::value_ptr(cave->rockcolor));
+    glUniform3fv(glGetUniformLocation(fishader->id, "ambientLightColor"), 1, glm::value_ptr(cave->ambientLight->intensity*cave->ambientLight->color));
+    glUniform3fv(glGetUniformLocation(fishader->id, "lightPos"), 1, glm::value_ptr(cave->light->pos));
+	glUniform3fv(glGetUniformLocation(fishader->id, "lightColor"), 1, glm::value_ptr(cave->light->color));
+    // model matrix
+    model = glm::mat4(1.0f);
+
+	modelLoc = glGetUniformLocation(fishader->id, "model");
+	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model)); 
+
+    //projection matrix
+    projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 1000.0f);
+	projectionLoc = glGetUniformLocation(fishader->id, "projection");
+	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+
 
     // ----- BOID GRAPHICS
     glGenVertexArrays(1, &boidsys->VAO);
@@ -161,17 +192,6 @@ int App::init(){
 
 	// capture mouse
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-    // model matrix
-    glm::mat4 model = glm::mat4(1.0f);
-
-	int modelLoc = glGetUniformLocation(shader->id, "model");
-	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model)); 
-
-    //projection matrix
-    glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 1000.0f);
-	int projectionLoc = glGetUniformLocation(shader->id, "projection");
-	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
     //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
     //glEnable(GL_CULL_FACE);
     //glCullFace(GL_BACK);
@@ -190,6 +210,7 @@ void App::render(){
 	trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));*/
 	//glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
     
+	shader->use();
     //model matrix
     glm::mat4 model = glm::mat4(1.0f);
 
@@ -199,19 +220,22 @@ void App::render(){
 	int viewLoc = glGetUniformLocation(shader->id, "view");
 	glm::mat4 view = camera.view();
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+    fishader->use();
+    glUniformMatrix4fv(glGetUniformLocation(fishader->id, "view"), 1, GL_FALSE, glm::value_ptr(view));
 
-    
+    shader->use();
     // draw cave
-	shader->use();
 	glBindVertexArray(VAO);
 	glDrawArrays(GL_TRIANGLES, 0, cave->vertices.size()/5);
     // draw fishies
+    fishader->use();
     glBindVertexArray(boidsys->VAO);
     for (int i=0; i< boidsys->boids.size(); i++){
         Boid* boid = boidsys->boids[i];
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, boid->pos);
-        int modelLoc = glGetUniformLocation(shader->id, "model");
+        model = model*boidsys->scale;
+        int modelLoc = glGetUniformLocation(fishader->id, "model");
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
         glDrawArrays(GL_TRIANGLES, 0, boidsys->boids.size());
     }

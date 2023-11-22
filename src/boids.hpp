@@ -32,6 +32,7 @@ public:
     float repellingForce;
     float cohesionForce;
     float alignmentForce;
+    glm::mat4 scale;
 };
 
 #endif
