@@ -207,13 +207,13 @@ BoidSystem::BoidSystem(int amount, Cave* cave){
 2.33333, 2, 4, 0.425662, 0.447509, 0.786478, 1, 0,
 2, 2, 4.33333, 0.367425, 0.427693, 0.82588, 0, 0,
 2, 2.33333, 4, 0.377769, 0.501562, 0.778284, 1, 0,
-2.33333, 2, 4, 0.425662, 0.447509, 0.786478, 0.5, 1, };   
+2.33333, 2, 4, 0.425662, 0.447509, 0.786478, 0.5, 1 };   
     neighboorRadius = 5.0f;
     repellingForce = -0.1f;
     cohesionForce = 0.1f;
     alignmentForce = 0.05f;
     scale = glm::mat4(1.0f); // model size scaling
-    scale = glm::scale(scale, glm::vec3(0.5f,0.5f,0.5f));
+    scale = glm::scale(scale, glm::vec3(0.3f,0.5f,0.5f));
 
 }
 

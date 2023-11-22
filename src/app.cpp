@@ -232,11 +232,13 @@ void App::render(){
     glBindVertexArray(boidsys->VAO);
     for (int i=0; i< boidsys->boids.size(); i++){
         Boid* boid = boidsys->boids[i];
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, boid->pos);
-        model = model*boidsys->scale;
+        glm::mat4 fishmodel = glm::mat4(1.0f);
+        fishmodel = glm::translate(fishmodel, glm::vec3(-1.5f, -1.5f, -2.5f));
+        glm::mat4 trans = glm::translate(glm::mat4(1.0f), boid->pos);
+        glm::mat4 look = glm::inverse(glm::lookAt(glm::vec3(0.0f), glm::normalize(-boid->vel), glm::vec3(0.0f, 1.0f, 0.0f)));
+        fishmodel = trans*look*boidsys->scale*fishmodel;
         int modelLoc = glGetUniformLocation(fishader->id, "model");
-        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(fishmodel));
         glDrawArrays(GL_TRIANGLES, 0, boidsys->boids.size());
     }
 	// check and call events and swap buffers
