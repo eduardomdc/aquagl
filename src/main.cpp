@@ -57,9 +57,13 @@ int main(){
 void framebuffer_size_callback(GLFWwindow* window, int width, int height){
     glViewport(0,0,width,height);
     glm::mat4 projection = glm::perspective(glm::radians(45.0f), float(width) / float(height), 0.1f, 1000.0f);
+    app->shader->use();
 	int projectionLoc = glGetUniformLocation(app->shader->id, "projection");
 	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
-    app->shader->use();
+    app->fishader->use();
+    projectionLoc = glGetUniformLocation(app->fishader->id, "projection");
+	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+    
 }
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos){
