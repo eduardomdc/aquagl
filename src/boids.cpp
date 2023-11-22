@@ -8,6 +8,7 @@
 
 Boid::Boid(){
     up = glm::vec3(0.0f, 1.0f, 0.0f);
+    phase = 1.5*randomf();
 }
 
 bool inVisionCone(Boid* boid, Boid* neigh){
@@ -48,30 +49,39 @@ void Boid::update(float delta, BoidSystem* bs){
     // collision avoidance
     // boundaries
     glm::vec3 avoidance = glm::vec3(0.0f, 0.0f , 0.0f); // avoidance component
-    float vision = 5.0f;
+    float vision = 6.0f;
     glm::vec3 raycast = pos + glm::normalize(vel)*vision;
+    int terrain = 0; // is there a predicted terrain collision
 
     // side of box detection
-    if (pos.x < 5.0f){
+    if (raycast.x < 5.0f){
+        terrain = 1;
         avoidance += 0.5f*glm::vec3(1.0f, 0.0f, 0.0f);
     }
-    if (pos.x > bs->cave->sizex -5.0f){
+    if (raycast.x > bs->cave->sizex -5.0f){
+        terrain = 1;
         avoidance -= 0.5f*glm::vec3(1.0f, 0.0f, 0.0f);
     }
-    if (pos.y < 5.0f){
+    if (raycast.y < 5.0f){
+        terrain = 1;
         avoidance += .5f*glm::vec3(0.0f, 1.0f, 0.0f);
     }
-    if (pos.y > bs->cave->sizey-5.0f){
+    if (raycast.y > bs->cave->sizey-5.0f){
+        terrain = 1;
         avoidance -= .5f*glm::vec3(0.0f, 1.0f, 0.0f);
     }
-    if (pos.z < 5.0f){
+    if (raycast.z < 5.0f){
+        terrain = 1;
         avoidance += .5f*glm::vec3(0.0f, 0.0f, 1.0f);
     }
-    if (pos.z > bs->cave->sizez-5.0f){
+    if (raycast.z > bs->cave->sizez-5.0f){
+        terrain = 1;
         avoidance -= .5f*glm::vec3(0.0f, 0.0f, 1.0f);
     }
     // terrain avoidance
-    if (bs->cave->field(raycast.x, raycast.y, raycast.z) < bs->cave->level){
+    if (bs->cave->field(raycast.x, raycast.y, raycast.z) < bs->cave->level
+    || bs->cave->field(pos.x, pos.y, pos.z) < bs->cave->level){
+        terrain = 1; // im going to hit terrain!
         glm::vec3 grad = bs->cave->fieldGrad(raycast);
         avoidance += 2.0f*grad;
     }
@@ -82,8 +92,9 @@ void Boid::update(float delta, BoidSystem* bs){
         averageVel = averageVel/(float)count;
         alignment = bs->alignmentForce*glm::normalize(averageVel-vel);
     }
-    vel += repelling + cohesion + alignment + avoidance;
-    vel = 5.0f*glm::normalize(vel);
+    if (!terrain) vel += repelling + cohesion + alignment + avoidance;
+    else vel += avoidance;
+    vel = 6.0f*glm::normalize(vel);
     pos += vel*delta;
     if (bs->cave->field(pos.x, pos.y, pos.z) < bs->cave->level){
         pos -= vel*delta;
@@ -213,7 +224,7 @@ BoidSystem::BoidSystem(int amount, Cave* cave){
     cohesionForce = 0.1f;
     alignmentForce = 0.05f;
     scale = glm::mat4(1.0f); // model size scaling
-    scale = glm::scale(scale, glm::vec3(0.3f,0.5f,0.5f));
+    scale = glm::scale(scale, glm::vec3(0.3f,0.5f,0.4f));
 
 }
 

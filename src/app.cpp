@@ -140,7 +140,7 @@ int App::init(){
 	int projectionLoc = glGetUniformLocation(shader->id, "projection");
 	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
     // FISH SHADER --- --------
-    fishader = new Shader("../src/shaders/v.vs", "../src/shaders/f.fs");
+    fishader = new Shader("../src/shaders/fish.vs", "../src/shaders/fish.fs");
     fishader->use();
     glUniform1i(glGetUniformLocation(fishader->id, "texture1"), 1);
 	glUniform3fv(glGetUniformLocation(fishader->id, "objectColor"), 1, glm::value_ptr(cave->rockcolor));
@@ -232,6 +232,7 @@ void App::render(){
     glBindVertexArray(boidsys->VAO);
     for (int i=0; i< boidsys->boids.size(); i++){
         Boid* boid = boidsys->boids[i];
+        glUniform1f(glGetUniformLocation(fishader->id, "phase"), glfwGetTime()+boid->phase);
         glm::mat4 fishmodel = glm::mat4(1.0f);
         fishmodel = glm::translate(fishmodel, glm::vec3(-1.5f, -1.5f, -2.5f));
         glm::mat4 trans = glm::translate(glm::mat4(1.0f), boid->pos);

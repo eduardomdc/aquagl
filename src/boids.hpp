@@ -17,6 +17,7 @@ public:
     glm::vec3 up;
     float delta;
     BoidSystem* system;
+    float phase; // wiggle phase
     void update(float delta, BoidSystem* bs);
 };
 

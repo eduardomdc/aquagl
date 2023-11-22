@@ -103,7 +103,7 @@ void Cave::generatePoints(){
 
 float Cave::field(float x, float y, float z){
     return simplex->noise(x/30.0, y/30.0, z/30.0)
-                                        //+y*0.05
+                                        +y*0.02
                                         -(1/(y*y+0.01))
                                         -(1/(y*y+1.))*simplex->noise(x/10., y/10., z/10.);
 }
