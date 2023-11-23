@@ -20,6 +20,34 @@ bool inVisionCone(Boid* boid, Boid* neigh){
     else return true;
 }
 
+glm::vec3 collisionResponse(glm::vec3 pos, BoidSystem* bs, bool* hit){
+    *hit = true;
+    if (pos.x < 0.0f){
+        return glm::vec3(1.0f, 0.0f, 0.0f);
+    }
+    if (pos.x > bs->cave->sizex -0.0f){
+        return glm::vec3(-1.0f, 0.0f, 0.0f);
+    }
+    if (pos.y < 0.0f){
+        return glm::vec3(0.0f, 1.0f, 0.0f);
+    }
+    if (pos.y > bs->cave->sizey-0.0f){
+        return glm::vec3(0.0f, -1.0f, 0.0f);
+    }
+    if (pos.z < 0.0f){
+        return glm::vec3(0.0f, 0.0f, 1.0f);
+    }
+    if (pos.z > bs->cave->sizez-0.0f){
+        return glm::vec3(0.0f, 0.0f, -1.0f);
+    }
+    // terrain avoidance
+    if (bs->cave->field(pos.x, pos.y, pos.z) < bs->cave->level){
+        return glm::normalize(bs->cave->fieldGrad(pos));
+    }
+    *hit = false;
+    return glm::vec3(0.0f, 0.0f, 0.0f);
+}
+
 void Boid::update(float delta, BoidSystem* bs){
     
     unsigned int count = 0; // number of neighbors
@@ -49,41 +77,46 @@ void Boid::update(float delta, BoidSystem* bs){
     // collision avoidance
     // boundaries
     glm::vec3 avoidance = glm::vec3(0.0f, 0.0f , 0.0f); // avoidance component
-    float vision = 6.0f;
-    glm::vec3 raycast = pos + glm::normalize(vel)*vision;
+    int maxdistance = 5;
+    glm::vec3 dir = glm::normalize(vel);
+    glm::vec3 raycast = pos; // raycast starts at boid pos
     int terrain = 0; // is there a predicted terrain collision
-
-    // side of box detection
-    if (raycast.x < 5.0f){
-        terrain = 1;
-        avoidance += 0.5f*glm::vec3(1.0f, 0.0f, 0.0f);
-    }
-    if (raycast.x > bs->cave->sizex -5.0f){
-        terrain = 1;
-        avoidance -= 0.5f*glm::vec3(1.0f, 0.0f, 0.0f);
-    }
-    if (raycast.y < 5.0f){
-        terrain = 1;
-        avoidance += .5f*glm::vec3(0.0f, 1.0f, 0.0f);
-    }
-    if (raycast.y > bs->cave->sizey-5.0f){
-        terrain = 1;
-        avoidance -= .5f*glm::vec3(0.0f, 1.0f, 0.0f);
-    }
-    if (raycast.z < 5.0f){
-        terrain = 1;
-        avoidance += .5f*glm::vec3(0.0f, 0.0f, 1.0f);
-    }
-    if (raycast.z > bs->cave->sizez-5.0f){
-        terrain = 1;
-        avoidance -= .5f*glm::vec3(0.0f, 0.0f, 1.0f);
-    }
-    // terrain avoidance
-    if (bs->cave->field(raycast.x, raycast.y, raycast.z) < bs->cave->level
-    || bs->cave->field(pos.x, pos.y, pos.z) < bs->cave->level){
-        terrain = 1; // im going to hit terrain!
-        glm::vec3 grad = bs->cave->fieldGrad(raycast);
-        avoidance += 2.0f*grad;
+    bool hit = false;
+    
+    //raycast loop increment distance each iteration
+    for (int distance = 0; distance < maxdistance and not terrain; distance++){
+        raycast += dir;
+        // side of box detection
+        if (raycast.x < 5.0f){
+            terrain = 1;
+            avoidance += 0.5f*glm::vec3(1.0f, 0.0f, 0.0f);
+        }
+        if (raycast.x > bs->cave->sizex -5.0f){
+            terrain = 1;
+            avoidance -= 0.5f*glm::vec3(1.0f, 0.0f, 0.0f);
+        }
+        if (raycast.y < 5.0f){
+            terrain = 1;
+            avoidance += .5f*glm::vec3(0.0f, 1.0f, 0.0f);
+        }
+        if (raycast.y > bs->cave->sizey-5.0f){
+            terrain = 1;
+            avoidance -= .5f*glm::vec3(0.0f, 1.0f, 0.0f);
+        }
+        if (raycast.z < 5.0f){
+            terrain = 1;
+            avoidance += .5f*glm::vec3(0.0f, 0.0f, 1.0f);
+        }
+        if (raycast.z > bs->cave->sizez-5.0f){
+            terrain = 1;
+            avoidance -= .5f*glm::vec3(0.0f, 0.0f, 1.0f);
+        }
+        // terrain avoidance
+        if (bs->cave->field(raycast.x, raycast.y, raycast.z) < bs->cave->level){
+            terrain = 1; // im going to hit terrain!
+            glm::vec3 grad = bs->cave->fieldGrad(raycast);
+            avoidance += 1.0f*grad;
+        }
     }
 
     if (count > 0){
@@ -95,10 +128,13 @@ void Boid::update(float delta, BoidSystem* bs){
     if (!terrain) vel += repelling + cohesion + alignment + avoidance;
     else vel += avoidance;
     vel = 6.0f*glm::normalize(vel);
-    pos += vel*delta;
-    if (bs->cave->field(pos.x, pos.y, pos.z) < bs->cave->level){
-        pos -= vel*delta;
-        vel = glm::vec3(0.0f);
+    glm::vec3 newpos =  pos+vel*delta;
+    glm::vec3 avoidvel = collisionResponse(pos, bs, &hit);
+    if (hit){
+        vel = 6.0f*avoidvel; 
+        pos += vel*delta;
+    } else {
+        pos = newpos;
     }
 }
 
