@@ -8,7 +8,7 @@ Camera::Camera() {
     up = glm::vec3(0,1,0);
     yaw = -90.0f;
     pitch = 0.0f;
-    //height = 3;
+    fps = false;
 }
 
 void Camera::move(glm::vec3 newPos){
@@ -18,14 +18,3 @@ void Camera::move(glm::vec3 newPos){
 glm::mat4 Camera::view() {
     return glm::lookAt(pos, pos+front, up);
 }
-
-/*
-void Camera::update(float delta, Cave* cave){
-    // if above ground
-    if (cave->field(pos.x, pos.y-height, pos.z) > cave->level){
-        pos.y -= 0.1;
-    } else {
-        // how to find level point?
-        return;
-    }
-}*/

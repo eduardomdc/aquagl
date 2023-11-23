@@ -256,25 +256,30 @@ void App::input(){
 	
     const float cameraSpeed = 50.0f*deltaTime;
     
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera.pos += cameraSpeed * camera.front;
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera.pos -= cameraSpeed * camera.front;
-    
     glm::vec3 right = glm::normalize(glm::cross(camera.front, camera.up));
     
-    /*if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera.pos += cameraSpeed * glm::normalize(glm::cross(camera.front, -right));
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera.pos -= cameraSpeed * glm::normalize(glm::cross(camera.front, -right));
-    */
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        camera.pos -= right * cameraSpeed;
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        camera.pos += right * cameraSpeed;
-    //glm::vec3 direction;
-    //direction = -camera.pos+glm::vec3(cave->sizex/2, 0, cave->sizez/2);
-    //camera.front = glm::normalize(direction);
+    if (camera.fps){
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+            camera.pos += cameraSpeed * camera.front;
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+            camera.pos -= cameraSpeed * camera.front;
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+            camera.pos -= right * cameraSpeed;
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+            camera.pos += right * cameraSpeed;
+    } else {
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+            camera.pos += cameraSpeed * glm::normalize(glm::cross(camera.front, -right));
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+            camera.pos -= cameraSpeed * glm::normalize(glm::cross(camera.front, -right));
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+            camera.pos -= right * cameraSpeed;
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+            camera.pos += right * cameraSpeed;
+        glm::vec3 direction;
+        direction = -camera.pos+glm::vec3(cave->sizex/2, cave->sizey/3.0, cave->sizez/2);
+        camera.front = glm::normalize(direction);
+    }
 }
 
 void App::update(){

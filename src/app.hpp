@@ -9,6 +9,8 @@
 #include "cave.hpp"
 #include "boids.hpp"
 
+#define FPS
+
 class App {
 public:
     App();

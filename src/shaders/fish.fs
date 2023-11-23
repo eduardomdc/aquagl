@@ -20,7 +20,7 @@ void main()
     //FragColor = vec4(normal.z, 0, 0, 1.0);//FragColor*clamp(dot(vec3(-2,0,0),normal),0.7,2);
     vec3 lightDir = normalize(lightPos - fragPos);
     float diff = max(dot(normal, lightDir), 0.0);
-    vec3 diffuse = diff * lightColor;
+    vec3 diffuse = 0.6 * lightColor;
     vec3 final = (ambientLightColor+diffuse) * objectColor;
     FragColor = vec4(final, 1.0)*texture(texture1, TexCoord);
 }

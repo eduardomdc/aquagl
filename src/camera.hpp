@@ -12,11 +12,10 @@ public:
     glm::vec3 pos;
     glm::vec3 front;
     glm::vec3 up;
-    //float height; // height from floor
     float yaw, pitch;
+    bool fps;
 
     void move(glm::vec3 newPos);
-    //void update(float delta, Cave* cave);
     glm::mat4 view();
 };
 

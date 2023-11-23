@@ -21,6 +21,7 @@ App* app;
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 int main(){
     std::cout << "main:: starting" << std::endl;
@@ -31,6 +32,7 @@ int main(){
     app->init();
     glfwSetCursorPosCallback(app->window, mouse_callback);
     glfwSetFramebufferSizeCallback(app->window, framebuffer_size_callback);
+    glfwSetKeyCallback(app->window, key_callback);
 
     //render loop
     while(!glfwWindowShouldClose(app->window)){
@@ -67,17 +69,18 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height){
 }
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos){
-	float xoffset = xpos - app->lastX;
-	float yoffset = app->lastY - ypos;
+    float xoffset = xpos - app->lastX;
+    float yoffset = app->lastY - ypos;
+	
     app->lastX = xpos;
     app->lastY = ypos;
-
     const float sensitivity = 0.05f;
     xoffset *= sensitivity;
     yoffset *= sensitivity;
-
-    app->camera.yaw += xoffset;
-    app->camera.pitch += yoffset;
+    if (app->camera.fps){
+        app->camera.yaw += xoffset;
+        app->camera.pitch += yoffset;
+    }
 
     if (app->camera.pitch > 89) app->camera.pitch = 89;
     if (app->camera.pitch < -89) app->camera.pitch = -89;
@@ -89,5 +92,17 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos){
     direction.z = sin(glm::radians(app->camera.yaw)) * cos(glm::radians(app->camera.pitch));
     
     //direction = -app->camera.pos;
-    app->camera.front = glm::normalize(direction);
+    if (app->camera.fps){
+        app->camera.front = glm::normalize(direction);
+    } else {
+        glm::vec3 right = glm::normalize(glm::cross(app->camera.front, app->camera.up));
+        app->camera.pos += right*xoffset;
+    }
+}
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS){
+        app->camera.fps = !app->camera.fps;
+    }
 }
