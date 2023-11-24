@@ -16,16 +16,31 @@ public:
     glm::vec3 vel;
     glm::vec3 up;
     float delta;
-    BoidSystem* system;
+    static BoidSystem* bs;
+    static glm::mat4 scale;
     float phase; // wiggle phase
-    void update(float delta, BoidSystem* bs);
+    void update(float delta);
+};
+
+class Killer { // predator boids
+public:
+    Killer();
+    glm::vec3 pos;
+    glm::vec3 vel;
+    glm::vec3 up;
+    float delta;
+    static BoidSystem* bs;
+    static glm::mat4 scale;
+    float phase; // wiggle phase
+    void update(float delta);
 };
 
 class BoidSystem{
 public:
-    BoidSystem(int amount, Cave* cave);
+    BoidSystem(int amount, int killers, Cave* cave);
     Cave* cave;
     std::vector<Boid*> boids;
+    std::vector<Killer*> killers;
     std::vector<float> verts;
     unsigned int VBO, VAO;
     void update(float delta);
@@ -33,7 +48,6 @@ public:
     float repellingForce;
     float cohesionForce;
     float alignmentForce;
-    glm::mat4 scale;
 };
 
 #endif

@@ -17,8 +17,8 @@
 App::App(){
     std::cout<<"App::Constructor()"<<std::endl;
 	camera = Camera();
-    cave = new Cave(50, 50, 50);
-    boidsys = new BoidSystem(500, cave);
+    cave = new Cave(200, 50, 100);
+    boidsys = new BoidSystem(500, 1, cave);
     camera.pos = {75, 100, 75};
     camera.front = -glm::normalize(camera.pos-glm::vec3(cave->sizex/2.0f, 0.0f, cave->sizez/2.0f));
     texture1 = 0;
@@ -143,7 +143,7 @@ int App::init(){
     fishader = new Shader("../src/shaders/fish.vs", "../src/shaders/fish.fs");
     fishader->use();
     glUniform1i(glGetUniformLocation(fishader->id, "texture1"), 1);
-	glUniform3fv(glGetUniformLocation(fishader->id, "objectColor"), 1, glm::value_ptr(cave->rockcolor));
+	glUniform3fv(glGetUniformLocation(fishader->id, "objectColor"), 1, glm::value_ptr(glm::vec3(1.0f)));
     glUniform3fv(glGetUniformLocation(fishader->id, "ambientLightColor"), 1, glm::value_ptr(cave->ambientLight->intensity*cave->ambientLight->color));
     glUniform3fv(glGetUniformLocation(fishader->id, "lightPos"), 1, glm::value_ptr(cave->light->pos));
 	glUniform3fv(glGetUniformLocation(fishader->id, "lightColor"), 1, glm::value_ptr(cave->light->color));
@@ -230,6 +230,7 @@ void App::render(){
     // draw fishies
     fishader->use();
     glBindVertexArray(boidsys->VAO);
+	glUniform3fv(glGetUniformLocation(fishader->id, "objectColor"), 1, glm::value_ptr(glm::vec3(1.0f)));
     for (int i=0; i< boidsys->boids.size(); i++){
         Boid* boid = boidsys->boids[i];
         glUniform1f(glGetUniformLocation(fishader->id, "phase"), glfwGetTime()+boid->phase);
@@ -237,10 +238,24 @@ void App::render(){
         fishmodel = glm::translate(fishmodel, glm::vec3(-1.5f, -1.5f, -2.5f));
         glm::mat4 trans = glm::translate(glm::mat4(1.0f), boid->pos);
         glm::mat4 look = glm::inverse(glm::lookAt(glm::vec3(0.0f), glm::normalize(-boid->vel), glm::vec3(0.0f, 1.0f, 0.0f)));
-        fishmodel = trans*look*boidsys->scale*fishmodel;
+        fishmodel = trans*look*boid->scale*fishmodel;
         int modelLoc = glGetUniformLocation(fishader->id, "model");
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(fishmodel));
-        glDrawArrays(GL_TRIANGLES, 0, boidsys->boids.size());
+        glDrawArrays(GL_TRIANGLES, 0, boidsys->verts.size()/8);
+    }
+	
+	glUniform3fv(glGetUniformLocation(fishader->id, "objectColor"), 1, glm::value_ptr(glm::vec3(1.0f, 0.0f, 0.0f)));
+    for (int i=0; i< boidsys->killers.size(); i++){
+        Killer* boid = boidsys->killers[i];
+        glUniform1f(glGetUniformLocation(fishader->id, "phase"), glfwGetTime()+boid->phase);
+        glm::mat4 fishmodel = glm::mat4(1.0f);
+        fishmodel = glm::translate(fishmodel, glm::vec3(-1.5f, -1.5f, -2.5f));
+        glm::mat4 trans = glm::translate(glm::mat4(1.0f), boid->pos);
+        glm::mat4 look = glm::inverse(glm::lookAt(glm::vec3(0.0f), glm::normalize(-boid->vel), glm::vec3(0.0f, 1.0f, 0.0f)));
+        fishmodel = trans*look*boid->scale*fishmodel;
+        int modelLoc = glGetUniformLocation(fishader->id, "model");
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(fishmodel));
+        glDrawArrays(GL_TRIANGLES, 0, boidsys->verts.size()/8);
     }
 	// check and call events and swap buffers
 	glfwSwapBuffers(window);

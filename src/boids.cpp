@@ -11,6 +11,11 @@ Boid::Boid(){
     phase = 1.5*randomf();
 }
 
+Killer::Killer(){
+    up = glm::vec3(0.0f, 1.0f, 0.0f);
+    phase = 1.5*randomf();
+}
+
 bool inVisionCone(Boid* boid, Boid* neigh){
     // returns true if neigh is in vision cone of boid
     // we can check the dot product between normalized boid->neigh and boid velocity
@@ -48,7 +53,7 @@ glm::vec3 collisionResponse(glm::vec3 pos, BoidSystem* bs, bool* hit){
     return glm::vec3(0.0f, 0.0f, 0.0f);
 }
 
-void Boid::update(float delta, BoidSystem* bs){
+void Boid::update(float delta){
     
     unsigned int count = 0; // number of neighbors
     glm::vec3 repelling = glm::vec3(0.0f, 0.0f, 0.0f); // repelling component of velocity
@@ -56,6 +61,7 @@ void Boid::update(float delta, BoidSystem* bs){
     glm::vec3 alignment = glm::vec3(0.0f, 0.0f, 0.0f); // alignment component
     glm::vec3 averagePos = glm::vec3(0.0f, 0.0f, 0.0f); // average position of neighbors
     glm::vec3 averageVel = glm::vec3(0.0f, 0.0f, 0.0f); // average velocity of neighbors
+    bool predator = false;
     
     for (int i=0; i<bs->boids.size(); i++){
         if (bs->boids[i] == this) continue; // no self interaction!
@@ -71,6 +77,19 @@ void Boid::update(float delta, BoidSystem* bs){
             averagePos += bs->boids[i]->pos;
             // averaging velocity
             averageVel += bs->boids[i]->vel;
+        } else continue;
+    }
+
+    // predator avoidance
+    glm::vec3 runaway = glm::vec3(0.0f);
+    for (int i=0; i<bs->killers.size(); i++){
+        float distance = glm::distance(bs->killers[i]->pos, pos);
+        // find close predators 
+        if (distance < 2*bs->neighboorRadius){
+            //repelling component
+            predator = true;
+            glm::vec3 toKiller = bs->killers[i]->pos - pos;
+            runaway += glm::normalize(-toKiller);
         } else continue;
     }
 
@@ -125,7 +144,7 @@ void Boid::update(float delta, BoidSystem* bs){
         averageVel = averageVel/(float)count;
         alignment = bs->alignmentForce*glm::normalize(averageVel-vel);
     }
-    if (!terrain) vel += repelling + cohesion + alignment + avoidance;
+    if (!terrain) vel += repelling + cohesion + alignment + avoidance + 2.0f*runaway;
     else vel += avoidance;
     vel = 6.0f*glm::normalize(vel);
     glm::vec3 newpos =  pos+vel*delta;
@@ -138,6 +157,86 @@ void Boid::update(float delta, BoidSystem* bs){
     }
 }
 
+void Killer::update(float delta){
+    unsigned int count = 0; // number of neighbors
+    float radius = 10.0f;
+    glm::vec3 hunting = glm::vec3(0.0f); // hunting component of velocity
+    glm::vec3 averagePos = glm::vec3(0.0f);
+    
+    for (int i=0; i<bs->boids.size(); i++){
+        float distance = glm::distance(bs->boids[i]->pos, pos);
+
+        // find close boids
+        if (distance < radius){
+            count++;
+            //repelling component
+            glm::vec3 toBoid = bs->boids[i]->pos - pos;
+            // averaging position
+            averagePos += bs->boids[i]->pos;
+        } else continue;
+    }
+
+    // collision avoidance
+    // boundaries
+    glm::vec3 avoidance = glm::vec3(0.0f, 0.0f , 0.0f); // avoidance component
+    int maxdistance = 5;
+    glm::vec3 dir = glm::normalize(vel);
+    glm::vec3 raycast = pos; // raycast starts at boid pos
+    int terrain = 0; // is there a predicted terrain collision
+    bool hit = false;
+    
+    //raycast loop increment distance each iteration
+    for (int distance = 0; distance < maxdistance and not terrain; distance++){
+        raycast += dir;
+        // side of box detection
+        if (raycast.x < 5.0f){
+            terrain = 1;
+            avoidance += 0.5f*glm::vec3(1.0f, 0.0f, 0.0f);
+        }
+        if (raycast.x > bs->cave->sizex -5.0f){
+            terrain = 1;
+            avoidance -= 0.5f*glm::vec3(1.0f, 0.0f, 0.0f);
+        }
+        if (raycast.y < 5.0f){
+            terrain = 1;
+            avoidance += .5f*glm::vec3(0.0f, 1.0f, 0.0f);
+        }
+        if (raycast.y > bs->cave->sizey-5.0f){
+            terrain = 1;
+            avoidance -= .5f*glm::vec3(0.0f, 1.0f, 0.0f);
+        }
+        if (raycast.z < 5.0f){
+            terrain = 1;
+            avoidance += .5f*glm::vec3(0.0f, 0.0f, 1.0f);
+        }
+        if (raycast.z > bs->cave->sizez-5.0f){
+            terrain = 1;
+            avoidance -= .5f*glm::vec3(0.0f, 0.0f, 1.0f);
+        }
+        // terrain avoidance
+        if (bs->cave->field(raycast.x, raycast.y, raycast.z) < bs->cave->level){
+            terrain = 1; // im going to hit terrain!
+            glm::vec3 grad = bs->cave->fieldGrad(raycast);
+            avoidance += 1.0f*grad;
+        }
+    }
+
+    if (count > 0){
+        averagePos = averagePos/(float)count;
+        hunting = glm::normalize(averagePos - pos);
+    }
+    if (!terrain) vel += hunting + avoidance;
+    else vel += avoidance;
+    vel = 6.0f*glm::normalize(vel);
+    glm::vec3 newpos =  pos+vel*delta;
+    glm::vec3 avoidvel = collisionResponse(pos, bs, &hit);
+    if (hit){
+        vel = 6.0f*avoidvel; 
+        pos += vel*delta;
+    } else {
+        pos = newpos;
+    }
+}
 
 glm::vec3 randomCavePoint(Cave* cave){
     glm::vec3 point;
@@ -149,14 +248,27 @@ glm::vec3 randomCavePoint(Cave* cave){
     return point;
 }
 
-BoidSystem::BoidSystem(int amount, Cave* cave){
+BoidSystem* Boid::bs;
+BoidSystem* Killer::bs;
+glm::mat4 Boid::scale = glm::scale(glm::mat4(1.0f), glm::vec3(0.3f,0.5f,0.4f));
+glm::mat4 Killer::scale = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f));
+
+BoidSystem::BoidSystem(int amount, int amountkillers, Cave* cave){
     std::cout<<"BoidSystem::Contructor()"<<std::endl;
     this->cave = cave;
+    Boid::bs = this;
+    Killer::bs = this;
     for (int i=0; i<amount; i++){
         Boid* boid = new Boid();
         boid->pos = randomCavePoint(cave);
         boid->vel = glm::sphericalRand(1.0f);
         boids.push_back(boid);
+    }
+    for (int i=0; i<amountkillers; i++){
+        Killer* killer = new Killer();
+        killer->pos = randomCavePoint(cave);
+        killer->vel = glm::sphericalRand(1.0f);
+        killers.push_back(killer);
     }
     verts =  {
 2, 1.625, 1, 0.553452, 0.735419, 0.390961, 0, 0,
@@ -259,13 +371,13 @@ BoidSystem::BoidSystem(int amount, Cave* cave){
     repellingForce = -0.1f;
     cohesionForce = 0.1f;
     alignmentForce = 0.05f;
-    scale = glm::mat4(1.0f); // model size scaling
-    scale = glm::scale(scale, glm::vec3(0.3f,0.5f,0.4f));
-
 }
 
 void BoidSystem::update(float delta){
     for (int i=0; i<boids.size(); i++){
-        boids[i]->update(delta, this);
+        boids[i]->update(delta);
+    }
+    for (int i=0; i<killers.size(); i++){
+        killers[i]->update(delta);
     }
 }
