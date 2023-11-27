@@ -1,5 +1,6 @@
 #include "app.hpp"
 #include <GLFW/glfw3.h>
+#include <cstdio>
 #include <iostream>
 #include "boids.hpp"
 #include "glm/ext/matrix_float4x4.hpp"
@@ -17,8 +18,8 @@
 App::App(){
     std::cout<<"App::Constructor()"<<std::endl;
 	camera = Camera();
-    cave = new Cave(200, 50, 100);
-    boidsys = new BoidSystem(500, 1, cave);
+    cave = new Cave(50, 40, 50);
+    boidsys = new BoidSystem(100, 1, cave);
     camera.pos = {75, 100, 75};
     camera.front = -glm::normalize(camera.pos-glm::vec3(cave->sizex/2.0f, 0.0f, cave->sizez/2.0f));
     texture1 = 0;
@@ -118,8 +119,16 @@ int App::init(){
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
     // LOADING TEXTURE ------------
+    printf("Loading Textures\n");
     texture1 = load_texture("../textures/rock.jpg", GL_RGB, 0);
     fishtex = load_texture("../textures/clownfish.png", GL_RGBA, 1);
+    // LOAD Caustics textures
+    for (int i=1; i<=32; i++){
+        char filename[100];
+        sprintf(filename, "../textures/caustics/caustics_%03d.bmp", i);
+        unsigned int name = load_texture(filename, GL_RGB, i+1);
+        causticstex.push_back(name);
+    }
     // set shader samplers for textures
     // CAVE SHADER- --------
     shader = new Shader("../src/shaders/v.vs", "../src/shaders/f.fs");
@@ -129,6 +138,7 @@ int App::init(){
     glUniform3fv(glGetUniformLocation(shader->id, "ambientLightColor"), 1, glm::value_ptr(cave->ambientLight->intensity*cave->ambientLight->color));
     glUniform3fv(glGetUniformLocation(shader->id, "lightPos"), 1, glm::value_ptr(cave->light->pos));
 	glUniform3fv(glGetUniformLocation(shader->id, "lightColor"), 1, glm::value_ptr(cave->light->color));
+    glUniform3fv(glGetUniformLocation(shader->id, "lightDir"), 1, glm::value_ptr(cave->light->dir));
     // model matrix
     glm::mat4 model = glm::mat4(1.0f);
 
@@ -147,6 +157,7 @@ int App::init(){
     glUniform3fv(glGetUniformLocation(fishader->id, "ambientLightColor"), 1, glm::value_ptr(cave->ambientLight->intensity*cave->ambientLight->color));
     glUniform3fv(glGetUniformLocation(fishader->id, "lightPos"), 1, glm::value_ptr(cave->light->pos));
 	glUniform3fv(glGetUniformLocation(fishader->id, "lightColor"), 1, glm::value_ptr(cave->light->color));
+    glUniform3fv(glGetUniformLocation(fishader->id, "lightDir"), 1, glm::value_ptr(cave->light->dir));
     // model matrix
     model = glm::mat4(1.0f);
 
@@ -195,7 +206,15 @@ int App::init(){
     //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
     //glEnable(GL_CULL_FACE);
     //glCullFace(GL_BACK);
+    printf("Ready\n");
     return 0;
+}
+
+int getCaustic(){
+    static int idx = 2;
+    idx++;
+    if (idx > 33) idx = 2;
+    return idx;
 }
 
 void App::render(){
@@ -222,15 +241,17 @@ void App::render(){
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
     fishader->use();
     glUniformMatrix4fv(glGetUniformLocation(fishader->id, "view"), 1, GL_FALSE, glm::value_ptr(view));
-
+    unsigned int currentCaustic = getCaustic();
     shader->use();
     // draw cave
+    glUniform1i(glGetUniformLocation(shader->id, "causticTex"), currentCaustic);
 	glBindVertexArray(VAO);
 	glDrawArrays(GL_TRIANGLES, 0, cave->vertices.size()/5);
     // draw fishies
     fishader->use();
     glBindVertexArray(boidsys->VAO);
 	glUniform3fv(glGetUniformLocation(fishader->id, "objectColor"), 1, glm::value_ptr(glm::vec3(1.0f)));
+    glUniform1i(glGetUniformLocation(fishader->id, "causticTex"), currentCaustic);
     for (int i=0; i< boidsys->boids.size(); i++){
         Boid* boid = boidsys->boids[i];
         glUniform1f(glGetUniformLocation(fishader->id, "phase"), glfwGetTime()+boid->phase);
@@ -244,7 +265,7 @@ void App::render(){
         glDrawArrays(GL_TRIANGLES, 0, boidsys->verts.size()/8);
     }
 	
-	glUniform3fv(glGetUniformLocation(fishader->id, "objectColor"), 1, glm::value_ptr(glm::vec3(1.0f, 0.0f, 0.0f)));
+	glUniform3fv(glGetUniformLocation(fishader->id, "objectColor"), 1, glm::value_ptr(glm::vec3(0.8f, 0.5f, 0.5f)));
     for (int i=0; i< boidsys->killers.size(); i++){
         Killer* boid = boidsys->killers[i];
         glUniform1f(glGetUniformLocation(fishader->id, "phase"), glfwGetTime()+boid->phase);
@@ -257,6 +278,7 @@ void App::render(){
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(fishmodel));
         glDrawArrays(GL_TRIANGLES, 0, boidsys->verts.size()/8);
     }
+    //cave->light->pos = boidsys->killers[0]->pos;
 	// check and call events and swap buffers
 	glfwSwapBuffers(window);
 	glfwPollEvents();

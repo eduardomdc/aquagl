@@ -41,9 +41,10 @@ Cave::Cave(uint sizex, uint sizey, uint sizez){
     ambientLight = new Light();
     light->pos = {sizex/2, 500.0, sizez/2};
     light->color = {1.0, 1.0, 1.0};
+    light->dir = {0.0f, 1.0f, 0.0f};
     ambientLight->color = {0.1, 0.5, 1.0};
     ambientLight->intensity = 0.3;
-    rockcolor = {1.0, 1.0, 1.0};
+    rockcolor = {0.95, 1.0, 1.0};
 }
 
 Cave::~Cave(){

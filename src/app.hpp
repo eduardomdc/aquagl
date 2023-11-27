@@ -25,6 +25,7 @@ public:
     float lastX=400, lastY = 300;
     unsigned int texture1;
     unsigned int fishtex;
+    std::vector<unsigned int> causticstex;
     unsigned int VBO, VAO, EBO;
 
     int init();
