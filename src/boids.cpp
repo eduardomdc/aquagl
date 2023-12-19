@@ -109,32 +109,39 @@ void Boid::update(float delta){
         if (raycast.x < 5.0f){
             terrain = 1;
             avoidance += 0.5f*glm::vec3(1.0f, 0.0f, 0.0f);
+            break;
         }
         if (raycast.x > bs->cave->sizex -5.0f){
             terrain = 1;
             avoidance -= 0.5f*glm::vec3(1.0f, 0.0f, 0.0f);
+            break;
         }
         if (raycast.y < 5.0f){
             terrain = 1;
             avoidance += .5f*glm::vec3(0.0f, 1.0f, 0.0f);
+            break;
         }
         if (raycast.y > bs->cave->sizey-5.0f){
             terrain = 1;
             avoidance -= .5f*glm::vec3(0.0f, 1.0f, 0.0f);
+            break;
         }
         if (raycast.z < 5.0f){
             terrain = 1;
             avoidance += .5f*glm::vec3(0.0f, 0.0f, 1.0f);
+            break;
         }
         if (raycast.z > bs->cave->sizez-5.0f){
             terrain = 1;
             avoidance -= .5f*glm::vec3(0.0f, 0.0f, 1.0f);
+            break;
         }
         // terrain avoidance
         if (bs->cave->field(raycast.x, raycast.y, raycast.z) < bs->cave->level){
             terrain = 1; // im going to hit terrain!
             glm::vec3 grad = bs->cave->fieldGrad(raycast);
             avoidance += 1.0f*grad;
+            break;
         }
     }
 
