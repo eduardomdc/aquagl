@@ -18,8 +18,8 @@
 App::App(){
     std::cout<<"App::Constructor()"<<std::endl;
 	camera = Camera();
-    cave = new Cave(50, 40, 50);
-    boidsys = new BoidSystem(100, 1, cave);
+    cave = new Cave(150, 80, 150);
+    boidsys = new BoidSystem(400, 1, cave);
     camera.pos = {75, 100, 75};
     camera.front = -glm::normalize(camera.pos-glm::vec3(cave->sizex/2.0f, 0.0f, cave->sizez/2.0f));
     texture1 = 0;
@@ -54,6 +54,7 @@ int App::init(){
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_SAMPLES, 4);
 
     #ifdef __APPLE__
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -206,15 +207,13 @@ int App::init(){
     //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
     //glEnable(GL_CULL_FACE);
     //glCullFace(GL_BACK);
+    glEnable(GL_MULTISAMPLE);
     printf("Ready\n");
     return 0;
 }
 
-int getCaustic(){
-    static int idx = 2;
-    idx++;
-    if (idx > 33) idx = 2;
-    return idx;
+int getCaustic(double time){
+    return (int)(30*time)%32+2;
 }
 
 void App::render(){
@@ -241,7 +240,7 @@ void App::render(){
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
     fishader->use();
     glUniformMatrix4fv(glGetUniformLocation(fishader->id, "view"), 1, GL_FALSE, glm::value_ptr(view));
-    unsigned int currentCaustic = getCaustic();
+    unsigned int currentCaustic = getCaustic(glfwGetTime());
     shader->use();
     // draw cave
     glUniform1i(glGetUniformLocation(shader->id, "causticTex"), currentCaustic);

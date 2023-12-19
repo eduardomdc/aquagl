@@ -28,7 +28,10 @@ void main()
     float diff = max(dot(normal, lightDir), 0.0);
     vec3 diffuse = diff * lightColor;
     vec3 final = (ambientLightColor+diffuse) * objectColor;
-    float caustic_scale = 0.1;
+    float caustic_scale = 0.05;
+    vec4 causticColors = vec4(1.0, 0.0, 0.0, 1.0)*texture(causticTex, caustic_scale*(causticTexCoord+vec2(0.05, 0.0)))
+                        +vec4(0.0, 1.0, 0.0, 1.0)*texture(causticTex, caustic_scale*(causticTexCoord+vec2(0.0, 0.0)))
+                        +vec4(0.0, 0.0, 1.0, 1.0)*texture(causticTex, caustic_scale*(causticTexCoord+vec2(0.1, 0.0)));
     final = vec3(clamp(final.r-zbuf*0.001f,0.0f,1.0f),clamp(final.g-zbuf*0.0005f,0.0f,1.0f),clamp(final.b-zbuf*0.0003f,0.0f,1.0f)); //fog
-    FragColor = vec4(final, 1.0)*texture(texture1, TexCoord)+0.4*vec4(diffuse,1.0)*texture(causticTex, caustic_scale*causticTexCoord);
+    FragColor = vec4(final, 1.0)*texture(texture1, TexCoord)+0.7*causticColors;
 }
